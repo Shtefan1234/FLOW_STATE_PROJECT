@@ -2,7 +2,8 @@ package com.example.flowstate.model;
 
 import jakarta.persistence.*;
 
-import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -14,8 +15,9 @@ public class User {
     private Long id;
     private String name;
     private String email;
-    private int streak;
-    private LocalDate lastActiveDate;
+
+    @OneToMany(mappedBy = "user")
+    private List<Track> tracks = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -41,19 +43,5 @@ public class User {
         this.email = email;
     }
 
-    public int getStreak() {
-        return streak;
-    }
 
-    public void setStreak(int streak) {
-        this.streak = streak;
-    }
-
-    public LocalDate getlastActiveDate() {
-        return lastActiveDate;
-    }
-
-    public void setlastActiveDate(LocalDate lastActiveDate) {
-        this.lastActiveDate = lastActiveDate;
-    }
 }
