@@ -44,4 +44,9 @@ public class TaskController {
         taskService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+    @PostMapping("/api/tracks/{id}/tasks")
+    public ResponseEntity<Task> createForTrack(@PathVariable Long id, @RequestBody Task task){
+        Task saved = taskService.createTaskForTrack(id, task);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
 }

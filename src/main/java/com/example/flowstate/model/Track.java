@@ -2,6 +2,7 @@ package com.example.flowstate.model;
 
 import jakarta.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +21,7 @@ public class Track {
     @ManyToOne
     @JoinColumn(name="user_id")
     private User user;
+    @JsonIgnore
     @OneToMany(mappedBy = "track")
     private List<Task> tasks = new ArrayList<>();
 

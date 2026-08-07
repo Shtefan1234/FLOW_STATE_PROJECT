@@ -45,5 +45,9 @@ public class TrackController {
         trackService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
-
+    @PostMapping("/api/users/{id}/tracks")
+    public ResponseEntity<Track> createForUser(@PathVariable Long id , @RequestBody Track track){
+        Track saved = trackService.createTrackForUser(id,track);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
 }

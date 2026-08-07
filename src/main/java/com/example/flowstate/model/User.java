@@ -2,6 +2,7 @@ package com.example.flowstate.model;
 
 import jakarta.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,6 +17,7 @@ public class User {
     private String name;
     private String email;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user")
     private List<Track> tracks = new ArrayList<>();
 
