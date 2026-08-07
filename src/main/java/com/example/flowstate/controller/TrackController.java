@@ -1,10 +1,12 @@
 package com.example.flowstate.controller;
 import com.example.flowstate.service.TrackService;
+import com.example.flowstate.service.TaskService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import com.example.flowstate.model.Track;
+import com.example.flowstate.model.Task;
 import com.example.flowstate.repository.TrackRepository;
 
 import java.util.List;
@@ -12,8 +14,10 @@ import java.util.List;
 @RequestMapping("/api/tracks")
 public class TrackController {
     private final TrackService trackService;
-    public TrackController(TrackService trackService){
+    private final TaskService taskService;
+    public TrackController(TrackService trackService, TaskService taskService){
         this.trackService=trackService;
+        this.taskService=taskService;
     }
     @GetMapping
     public List<Track> getAll(){
@@ -45,9 +49,9 @@ public class TrackController {
         trackService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
-    @PostMapping("/api/users/{id}/tracks")
-    public ResponseEntity<Track> createForUser(@PathVariable Long id , @RequestBody Track track){
-        Track saved = trackService.createTrackForUser(id,track);
+    @PostMapping("/{id}/tasks")
+    public ResponseEntity<Task> createTaskForTrack(@PathVariable Long id, @RequestBody Task task){
+        Task saved = taskService.createTaskForTrack(id, task);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 }
