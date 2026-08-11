@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FlowState</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, sans-serif; margin: 0; padding: 16px; background: #f4f6f8; color: #222; }
+        h1 { margin: 0 0 16px; }
+        .panel { background: #fff; border-radius: 10px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+        .user-name { font-size: 1.1em; font-weight: bold; }
+        .user-email { color: #666; font-size: .9em; }
+        .track { border-left: 4px solid #3b82f6; padding: 8px 12px; margin: 8px 0; background: #f9fbfd; border-radius: 6px; }
+        .track-title { font-weight: 600; }
+        .task { display: flex; align-items: center; gap: 8px; margin: 4px 0 4px 16px; }
+        .task.done span { text-decoration: line-through; color: #999; }
+        .badge { font-size: .75em; padding: 2px 8px; border-radius: 10px; background: #e5e7eb; }
+        .badge.DONE { background: #d1fae5; color: #065f46; }
+        .badge.PENDING { background: #fef3c7; color: #92400e; }
+        .badge.SKIPPED { background: #f3f4f6; color: #374151; }
+        form.inline { display: inline; }
+        input, select, button { padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc; font-size: .9em; }
+        button { cursor: pointer; background: #3b82f6; color: #fff; border: none; }
+        button.danger { background: #ef4444; }
+        button.small { padding: 3px 8px; font-size: .8em; background: #e5e7eb; color: #333; }
+        .muted { color: #999; }
+    </style>
+</head>
+<body>
+<h1>FlowState</h1>
+
+<div class="panel">
+    <h3>Новый пользователь</h3>
+    <form method="post" action="/users">
+        <input type="text" name="name" placeholder="Имя" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <button type="submit">Создать</button>
+    </form>
+</div>
+
+<div th:each="user : ${users}" class="panel">
+    <span class="user-name" th:text="${user.name}">Имя</span>
+    <span class="user-email" th:text="${'(' + user.email + ')'}">(email)</span>
+    <form class="inline" method="post" th:action="@{/users/{id}/delete(id=${user.id})}">
+        <button type="submit" class="danger">Удалить</button>
+    </form>
+
+    <div th:each="track : ${user.tracks}" class="track">
+        <span class="track-title" th:text="${track.title}">Трек</span>
+        <span class="badge" th:text="${track.category}">CATEGORY</span>
+        <span class="muted" th:if="${track.deadline != null}" th:text="${'до ' + track.deadline}">до</span>
+        <form class="inline" method="post" th:action="@{/tracks/{id}/delete(id=${track.id})}">
+            <button type="submit" class="danger">Удалить трек</button>
+        </form>
+
+        <div th:each="task : ${track.tasks}">
+            <div class="task" th:classappend="${task.status.name()} == 'DONE' ? 'done'">
+                <span th:text="${task.title}">Задача</span>
+                <span class="badge" th:text="${task.status}" th:classappend="${task.status}">STATUS</span>
+                <form class="inline" method="post" th:action="@{/tasks/{id}/toggle(id=${task.id})}">
+                    <button type="submit" class="small">Сменить статус</button>
+                </form>
+                <form class="inline" method="post" th:action="@{/tasks/{id}/delete(id=${task.id})}">
+                    <button type="submit" class="small">Удалить</button>
+                </form>
+            </div>
+        </div>
+
+        <form method="post" th:action="@{/tracks/{trackId}/tasks(trackId=${track.id})}">
+            <input type="text" name="title" placeholder="Новая задача" required>
+            <select name="status">
+                <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}">PENDING</option>
+            </select>
+            <input type="number" name="orderIndex" value="1" min="0">
+            <button type="submit">Добавить задачу</button>
+        </form>
+    </div>
+
+    <form method="post" th:action="@{/users/{id}/tracks(id=${user.id})}">
+        <input type="text" name="title" placeholder="Новый трек" required>
+        <select name="category">
+            <option th:each="c : ${categories}" th:value="${c}" th:text="${c}">STUDIES</option>
+        </select>
+        <input type="date" name="deadline">
+        <button type="submit">Добавить трек</button>
+    </form>
+</div>
+
+</body>
+</html>
