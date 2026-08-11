@@ -12,6 +12,9 @@ import com.example.flowstate.service.TrackService;
 import com.example.flowstate.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -30,10 +33,10 @@ public class UserController {
     private final TrackWebMapper trackWebMapper;
 
     @GetMapping
-    public List<UserResponse> getAll() {
-        return userService.findAll().stream()
-                .map(userWebMapper::toResponse)
-                .toList();
+    public Page<UserResponse> getAll(@RequestParam(defaultValue = "0") int page,
+                                     @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return userService.findAll(pageable).map(userWebMapper::toResponse);
     }
 
     @GetMapping("/{id}")

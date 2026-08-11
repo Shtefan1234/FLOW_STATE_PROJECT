@@ -8,15 +8,17 @@ import com.example.flowstate.mapper.TaskWebMapper;
 import com.example.flowstate.mapper.TrackWebMapper;
 import com.example.flowstate.model.Task;
 import com.example.flowstate.model.Track;
+import com.example.flowstate.model.TrackCategory;
 import com.example.flowstate.service.TaskService;
 import com.example.flowstate.service.TrackService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/tracks")
@@ -30,10 +32,11 @@ public class TrackController {
     private final TaskWebMapper taskWebMapper;
 
     @GetMapping
-    public List<TrackResponse> getAll() {
-        return trackService.findAll().stream()
-                .map(trackWebMapper::toResponse)
-                .toList();
+    public Page<TrackResponse> getAll(@RequestParam(required = false) TrackCategory category,
+                                      @RequestParam(defaultValue = "0") int page,
+                                      @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return trackService.findAll(category, pageable).map(trackWebMapper::toResponse);
     }
 
     @GetMapping("/{id}")

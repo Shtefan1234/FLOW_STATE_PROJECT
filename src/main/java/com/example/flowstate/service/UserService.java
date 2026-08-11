@@ -3,6 +3,8 @@ package com.example.flowstate.service;
 import com.example.flowstate.exception.UserNotFoundException;
 import com.example.flowstate.model.User;
 import com.example.flowstate.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,8 +18,8 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public List<User> findAll() {
-        return userRepository.findAll();
+    public Page<User> findAll(Pageable pageable) {
+        return userRepository.findAll(pageable);
     }
 
     public User getById(Long id) {

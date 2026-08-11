@@ -3,9 +3,12 @@ package com.example.flowstate.service;
 import com.example.flowstate.exception.TrackNotFoundException;
 import com.example.flowstate.exception.UserNotFoundException;
 import com.example.flowstate.model.Track;
+import com.example.flowstate.model.TrackCategory;
 import com.example.flowstate.model.User;
 import com.example.flowstate.repository.TrackRepository;
 import com.example.flowstate.repository.UserRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -58,5 +61,11 @@ public class TrackService {
             trackData.setCreatedAt(LocalDate.now());
         }
         return trackRepository.save(trackData);
+    }
+    public Page<Track> findAll(TrackCategory category, Pageable pageable){
+        if(category==null){
+            return trackRepository.findAll(pageable);
+        }
+        return trackRepository.findByCategory(category,pageable);
     }
 }
