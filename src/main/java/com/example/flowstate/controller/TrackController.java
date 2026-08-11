@@ -1,57 +1,70 @@
 package com.example.flowstate.controller;
-import com.example.flowstate.service.TrackService;
-import com.example.flowstate.service.TaskService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import com.example.flowstate.model.Track;
+
+import com.example.flowstate.dto.request.TaskRequest;
+import com.example.flowstate.dto.request.TrackRequest;
+import com.example.flowstate.dto.response.TaskResponse;
+import com.example.flowstate.dto.response.TrackResponse;
+import com.example.flowstate.mapper.TaskWebMapper;
+import com.example.flowstate.mapper.TrackWebMapper;
 import com.example.flowstate.model.Task;
-import com.example.flowstate.repository.TrackRepository;
+import com.example.flowstate.model.Track;
+import com.example.flowstate.service.TaskService;
+import com.example.flowstate.service.TrackService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 @RestController
 @RequestMapping("/api/tracks")
+@RequiredArgsConstructor
+@Validated
 public class TrackController {
+
     private final TrackService trackService;
+    private final TrackWebMapper trackWebMapper;
     private final TaskService taskService;
-    public TrackController(TrackService trackService, TaskService taskService){
-        this.trackService=trackService;
-        this.taskService=taskService;
-    }
+    private final TaskWebMapper taskWebMapper;
+
     @GetMapping
-    public List<Track> getAll(){
-        return trackService.findAll();
+    public List<TrackResponse> getAll() {
+        return trackService.findAll().stream()
+                .map(trackWebMapper::toResponse)
+                .toList();
     }
+
     @GetMapping("/{id}")
-    public ResponseEntity<Track> getById(@PathVariable Long id){
-        Track track = trackService.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
-        return ResponseEntity.ok(track);
+    public TrackResponse getById(@PathVariable("id") Long trackId) {
+        return trackWebMapper.toResponse(trackService.getById(trackId));
     }
+
     @PostMapping
-    public ResponseEntity<Track> create(@RequestBody Track track){
-        Track saved = trackService.save(track);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    @ResponseStatus(HttpStatus.CREATED)
+    public TrackResponse create(@Valid @RequestBody TrackRequest request) {
+        Track saved = trackService.save(trackWebMapper.toEntity(request));
+        return trackWebMapper.toResponse(saved);
     }
+
     @PutMapping("/{id}")
-    public ResponseEntity<Track> update(@PathVariable Long id,@RequestBody Track track){
-        if(!trackService.existsById(id)){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-        track.setId(id);
-        return ResponseEntity.ok(trackService.save(track));
+    @ResponseStatus(HttpStatus.OK)
+    public TrackResponse update(@PathVariable("id") Long trackId, @Valid @RequestBody TrackRequest request) {
+        Track updated = trackService.update(trackId, trackWebMapper.toEntity(request));
+        return trackWebMapper.toResponse(updated);
     }
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id){
-        if(!trackService.existsById(id)){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-        trackService.deleteById(id);
-        return ResponseEntity.noContent().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable("id") Long trackId) {
+        trackService.delete(trackId);
     }
+
     @PostMapping("/{id}/tasks")
-    public ResponseEntity<Task> createTaskForTrack(@PathVariable Long id, @RequestBody Task task){
-        Task saved = taskService.createTaskForTrack(id, task);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    @ResponseStatus(HttpStatus.CREATED)
+    public TaskResponse createTaskForTrack(@PathVariable("id") Long trackId, @Valid @RequestBody TaskRequest request) {
+        Task saved = taskService.createTaskForTrack(trackId, taskWebMapper.toEntity(request));
+        return taskWebMapper.toResponse(saved);
     }
 }

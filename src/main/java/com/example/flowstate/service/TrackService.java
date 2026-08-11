@@ -1,19 +1,19 @@
 package com.example.flowstate.service;
 
+import com.example.flowstate.exception.TrackNotFoundException;
+import com.example.flowstate.exception.UserNotFoundException;
 import com.example.flowstate.model.Track;
 import com.example.flowstate.model.User;
 import com.example.flowstate.repository.TrackRepository;
 import com.example.flowstate.repository.UserRepository;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class TrackService {
+
     private final TrackRepository trackRepository;
     private final UserRepository userRepository;
 
@@ -26,24 +26,33 @@ public class TrackService {
         return trackRepository.findAll();
     }
 
-    public Optional<Track> findById(Long id) {
-        return trackRepository.findById(id);
+    public Track getById(Long id) {
+        return trackRepository.findById(id)
+                .orElseThrow(() -> new TrackNotFoundException(id));
     }
 
     public Track save(Track track) {
         return trackRepository.save(track);
     }
 
-    public boolean existsById(Long id) {
-        return trackRepository.existsById(id);
+    public Track update(Long id, Track track) {
+        if (!trackRepository.existsById(id)) {
+            throw new TrackNotFoundException(id);
+        }
+        track.setId(id);
+        return trackRepository.save(track);
     }
 
-    public void deleteById(Long id) {
+    public void delete(Long id) {
+        if (!trackRepository.existsById(id)) {
+            throw new TrackNotFoundException(id);
+        }
         trackRepository.deleteById(id);
     }
+
     public Track createTrackForUser(Long userId, Track trackData) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new UserNotFoundException(userId));
         trackData.setUser(user);
         if (trackData.getCreatedAt() == null) {
             trackData.setCreatedAt(LocalDate.now());

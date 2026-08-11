@@ -1,47 +1,56 @@
 package com.example.flowstate.controller;
-import com.example.flowstate.service.TaskService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
+
+import com.example.flowstate.dto.request.TaskRequest;
+import com.example.flowstate.dto.response.TaskResponse;
+import com.example.flowstate.mapper.TaskWebMapper;
 import com.example.flowstate.model.Task;
-import com.example.flowstate.repository.TaskRepository;
+import com.example.flowstate.service.TaskService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
+
 @RestController
 @RequestMapping("/api/tasks")
+@RequiredArgsConstructor
+@Validated
 public class TaskController {
+
     private final TaskService taskService;
-    public TaskController(TaskService taskService){
-        this.taskService=taskService;
-    }
+    private final TaskWebMapper taskWebMapper;
+
     @GetMapping
-    public List<Task> getAll(){
-        return taskService.findAll();
+    public List<TaskResponse> getAll() {
+        return taskService.findAll().stream()
+                .map(taskWebMapper::toResponse)
+                .toList();
     }
+
     @GetMapping("/{id}")
-    public ResponseEntity<Task> getById(@PathVariable Long id){
-        Task task = taskService.findById(id).orElseThrow(()-> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        return ResponseEntity.ok(task);
+    public TaskResponse getById(@PathVariable("id") Long taskId) {
+        return taskWebMapper.toResponse(taskService.getById(taskId));
     }
+
     @PostMapping
-    public ResponseEntity<Task> create(@RequestBody Task task){
-        Task saved = taskService.save(task);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    @ResponseStatus(HttpStatus.CREATED)
+    public TaskResponse create(@Valid @RequestBody TaskRequest request) {
+        Task saved = taskService.save(taskWebMapper.toEntity(request));
+        return taskWebMapper.toResponse(saved);
     }
+
     @PutMapping("/{id}")
-    public ResponseEntity<Task> update(@PathVariable Long id,@RequestBody Task task){
-        if(!taskService.existsById(id)){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-        task.setId(id);
-        return ResponseEntity.ok(taskService.save(task));
+    @ResponseStatus(HttpStatus.OK)
+    public TaskResponse update(@PathVariable("id") Long taskId, @Valid @RequestBody TaskRequest request) {
+        Task updated = taskService.update(taskId, taskWebMapper.toEntity(request));
+        return taskWebMapper.toResponse(updated);
     }
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id){
-        if(!taskService.existsById(id)){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-        taskService.deleteById(id);
-        return ResponseEntity.noContent().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable("id") Long taskId) {
+        taskService.delete(taskId);
     }
 }

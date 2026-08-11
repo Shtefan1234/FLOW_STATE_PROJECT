@@ -1,56 +1,69 @@
 package com.example.flowstate.controller;
-import com.example.flowstate.service.UserService;
-import com.example.flowstate.service.TrackService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import com.example.flowstate.model.User;
+
+import com.example.flowstate.dto.request.TrackRequest;
+import com.example.flowstate.dto.request.UserRequest;
+import com.example.flowstate.dto.response.TrackResponse;
+import com.example.flowstate.dto.response.UserResponse;
+import com.example.flowstate.mapper.TrackWebMapper;
+import com.example.flowstate.mapper.UserWebMapper;
 import com.example.flowstate.model.Track;
-import com.example.flowstate.repository.UserRepository;
+import com.example.flowstate.model.User;
+import com.example.flowstate.service.TrackService;
+import com.example.flowstate.service.UserService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
+
 @RestController
 @RequestMapping("/api/users")
+@RequiredArgsConstructor
+@Validated
 public class UserController {
+
     private final UserService userService;
     private final TrackService trackService;
-    public UserController(UserService userService, TrackService trackService){
-        this.userService=userService;
-        this.trackService=trackService;
-    }
+    private final UserWebMapper userWebMapper;
+    private final TrackWebMapper trackWebMapper;
+
     @GetMapping
-    public List<User> getAll(){
-        return userService.findAll();
+    public List<UserResponse> getAll() {
+        return userService.findAll().stream()
+                .map(userWebMapper::toResponse)
+                .toList();
     }
+
     @GetMapping("/{id}")
-    public ResponseEntity<User> getById(@PathVariable Long id){
-        User user = userService.findById(id).orElseThrow(()->new ResponseStatusException(HttpStatus.NOT_FOUND));
-        return ResponseEntity.ok(user);
+    public UserResponse getById(@PathVariable("id") Long userId) {
+        return userWebMapper.toResponse(userService.getById(userId));
     }
+
     @PostMapping
-    public ResponseEntity<User> create(@RequestBody User user) {
-        User saved = userService.save(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserResponse create(@Valid @RequestBody UserRequest request) {
+        User saved = userService.save(userWebMapper.toEntity(request));
+        return userWebMapper.toResponse(saved);
     }
+
     @PutMapping("/{id}")
-    public ResponseEntity<User> update(@PathVariable Long id,@RequestBody User user){
-        if(!userService.existsById(id)){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-        user.setId(id);
-        return ResponseEntity.ok(userService.save(user));
+    public UserResponse update(@PathVariable("id") Long userId, @Valid @RequestBody UserRequest request) {
+        User updated = userService.update(userId, userWebMapper.toEntity(request));
+        return userWebMapper.toResponse(updated);
     }
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id){
-        if(!userService.existsById(id)){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
-        }
-        userService.deleteById(id);
-        return ResponseEntity.noContent().build();
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable("id") Long userId) {
+        userService.delete(userId);
     }
+
     @PostMapping("/{id}/tracks")
-    public ResponseEntity<Track> createTrackForUser(@PathVariable Long id, @RequestBody Track track){
-        Track saved = trackService.createTrackForUser(id, track);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    @ResponseStatus(HttpStatus.CREATED)
+    public TrackResponse createTrackForUser(@PathVariable("id") Long userId, @Valid @RequestBody TrackRequest request) {
+        Track saved = trackService.createTrackForUser(userId, trackWebMapper.toEntity(request));
+        return trackWebMapper.toResponse(saved);
     }
 }
