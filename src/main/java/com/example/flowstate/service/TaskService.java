@@ -3,9 +3,12 @@ package com.example.flowstate.service;
 import com.example.flowstate.exception.TaskNotFoundException;
 import com.example.flowstate.exception.TrackNotFoundException;
 import com.example.flowstate.model.Task;
+import com.example.flowstate.model.TaskCategory;
 import com.example.flowstate.model.Track;
 import com.example.flowstate.repository.TaskRepository;
 import com.example.flowstate.repository.TrackRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,6 +26,13 @@ public class TaskService {
 
     public List<Task> findAll() {
         return taskRepository.findAll();
+    }
+
+    public Page<Task> findAll(TaskCategory category, Pageable pageable) {
+        if (category == null) {
+            return taskRepository.findAll(pageable);
+        }
+        return taskRepository.findByCategory(category, pageable);
     }
 
     public Task getById(Long id) {

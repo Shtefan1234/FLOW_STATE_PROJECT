@@ -48,7 +48,6 @@
 
     <div th:each="track : ${user.tracks}" class="track">
         <span class="track-title" th:text="${track.title}">Трек</span>
-        <span class="badge" th:text="${track.category}">CATEGORY</span>
         <span class="muted" th:if="${track.deadline != null}" th:text="${'до ' + track.deadline}">до</span>
         <form class="inline" method="post" th:action="@{/tracks/{id}/delete(id=${track.id})}">
             <button type="submit" class="danger">Удалить трек</button>
@@ -72,6 +71,10 @@
             <select name="status">
                 <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}">PENDING</option>
             </select>
+            <select name="category">
+                <option th:each="c : ${categories}" th:value="${c}" th:text="${c}">STUDIES</option>
+            </select>
+            <input type="date" name="date" required>
             <input type="number" name="orderIndex" value="1" min="0">
             <button type="submit">Добавить задачу</button>
         </form>
@@ -79,9 +82,6 @@
 
     <form method="post" th:action="@{/users/{id}/tracks(id=${user.id})}">
         <input type="text" name="title" placeholder="Новый трек" required>
-        <select name="category">
-            <option th:each="c : ${categories}" th:value="${c}" th:text="${c}">STUDIES</option>
-        </select>
         <input type="date" name="deadline">
         <button type="submit">Добавить трек</button>
     </form>

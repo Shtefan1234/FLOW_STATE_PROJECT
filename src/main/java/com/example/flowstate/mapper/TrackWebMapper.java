@@ -8,7 +8,6 @@ public class TrackWebMapper {
     public Track toEntity(TrackRequest request){
         Track track = new Track();
         track.setTitle(request.title());
-        track.setCategory(request.category());
         track.setDeadline(request.deadline());
         return track;
     }
@@ -16,7 +15,6 @@ public class TrackWebMapper {
         return new TrackResponse(
                 track.getId(),
                 track.getTitle(),
-                track.getCategory(),
                 track.getDeadline(),
                 track.getCreatedAt()
         );

@@ -2,6 +2,8 @@ package com.example.flowstate.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
+
 @Entity
 @Table(name="tasks")
 public class Task {
@@ -12,6 +14,8 @@ public class Task {
     @Enumerated(EnumType.STRING)
     private TaskStatus status;
     private int orderIndex;
+    private TaskCategory category;
+    private LocalDate date;
     @ManyToOne
     @JoinColumn(name="track_id")
     private Track track;
@@ -41,6 +45,22 @@ public class Task {
 
     public void setStatus(TaskStatus status) {
         this.status = status;
+    }
+
+    public TaskCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(TaskCategory category) {
+        this.category = category;
+    }
+
+    public LocalDate getDate() {
+        return date;
+    }
+
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 
     public int getOrderIndex() {

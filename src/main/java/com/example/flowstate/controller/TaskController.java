@@ -4,14 +4,16 @@ import com.example.flowstate.dto.request.TaskRequest;
 import com.example.flowstate.dto.response.TaskResponse;
 import com.example.flowstate.mapper.TaskWebMapper;
 import com.example.flowstate.model.Task;
+import com.example.flowstate.model.TaskCategory;
 import com.example.flowstate.service.TaskService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/tasks")
@@ -23,10 +25,11 @@ public class TaskController {
     private final TaskWebMapper taskWebMapper;
 
     @GetMapping
-    public List<TaskResponse> getAll() {
-        return taskService.findAll().stream()
-                .map(taskWebMapper::toResponse)
-                .toList();
+    public Page<TaskResponse> getAll(@RequestParam(required = false) TaskCategory category,
+                                     @RequestParam(defaultValue = "0") int page,
+                                     @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return taskService.findAll(category, pageable).map(taskWebMapper::toResponse);
     }
 
     @GetMapping("/{id}")

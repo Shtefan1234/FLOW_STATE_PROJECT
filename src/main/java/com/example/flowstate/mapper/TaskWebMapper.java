@@ -12,6 +12,8 @@ public class TaskWebMapper {
         Task task = new Task();
         task.setTitle(request.title());
         task.setStatus(request.status());
+        task.setCategory(request.category());
+        task.setDate(request.date());
         task.setOrderIndex(request.orderIndex());
         return task;
     }
@@ -21,6 +23,8 @@ public class TaskWebMapper {
                 task.getId(),
                 task.getTitle(),
                 task.getStatus(),
+                task.getCategory(),
+                task.getDate(),
                 task.getOrderIndex()
         );
     }

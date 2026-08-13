@@ -1,9 +1,9 @@
 package com.example.flowstate.controller;
 
 import com.example.flowstate.model.Task;
+import com.example.flowstate.model.TaskCategory;
 import com.example.flowstate.model.TaskStatus;
 import com.example.flowstate.model.Track;
-import com.example.flowstate.model.TrackCategory;
 import com.example.flowstate.model.User;
 import com.example.flowstate.service.TaskService;
 import com.example.flowstate.service.TrackService;
@@ -33,7 +33,7 @@ public class DashboardController {
     public String dashboard(Model model) {
         List<User> users = userService.findAll(Pageable.unpaged()).getContent();
         model.addAttribute("users", users);
-        model.addAttribute("categories", TrackCategory.values());
+        model.addAttribute("categories", TaskCategory.values());
         model.addAttribute("statuses", TaskStatus.values());
         return "dashboard";
     }
@@ -56,11 +56,9 @@ public class DashboardController {
     @PostMapping("/users/{id}/tracks")
     public String createTrack(@PathVariable Long id,
                               @RequestParam String title,
-                              @RequestParam String category,
                               @RequestParam(required = false) String deadline) {
         Track track = new Track();
         track.setTitle(title);
-        track.setCategory(TrackCategory.valueOf(category));
         if (deadline != null && !deadline.isBlank()) {
             track.setDeadline(LocalDate.parse(deadline));
         }
@@ -78,10 +76,14 @@ public class DashboardController {
     public String createTask(@PathVariable Long trackId,
                              @RequestParam String title,
                              @RequestParam String status,
+                             @RequestParam String category,
+                             @RequestParam String date,
                              @RequestParam int orderIndex) {
         Task task = new Task();
         task.setTitle(title);
         task.setStatus(TaskStatus.valueOf(status));
+        task.setCategory(TaskCategory.valueOf(category));
+        task.setDate(LocalDate.parse(date));
         task.setOrderIndex(orderIndex);
         taskService.createTaskForTrack(trackId, task);
         return "redirect:/";

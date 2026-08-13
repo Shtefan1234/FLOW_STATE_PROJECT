@@ -14,8 +14,6 @@ public class Track {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Enumerated(EnumType.STRING)
-    private TrackCategory category;
     private LocalDate deadline;
     private LocalDate createdAt;
     @ManyToOne
@@ -43,14 +41,6 @@ public class Track {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public TrackCategory getCategory() {
-        return category;
-    }
-
-    public void setCategory(TrackCategory category) {
-        this.category = category;
     }
 
     public LocalDate getDeadline() {

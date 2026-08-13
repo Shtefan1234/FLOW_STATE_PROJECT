@@ -1,6 +1,6 @@
 package com.example.flowstate.model;
 
-public enum TrackCategory {
+public enum TaskCategory {
     STUDIES,
     SPORT,
     LANGUAGES,
