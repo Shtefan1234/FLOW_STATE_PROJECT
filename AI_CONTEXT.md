@@ -78,6 +78,7 @@
 
 ### Ключевое решение
 Сущности «день» нет и не планируется. День вычисляется из задач по полю `date` (группировка в `TrackService.getDays`). Статус дня: нет задач → EMPTY; все DONE/SKIPPED → DONE; иначе → PARTIAL.
+Диапазон дней: от `createdAt` до `deadline`; если дедлайна нет — до последней даты задач трека (или до сегодня, если задач нет).
 
 ---
 
@@ -108,7 +109,13 @@ mapper (DTO ↔ entity)
 - `/api/tracks` — CRUD + пагинация
 - `/api/tasks` — CRUD + пагинация + **фильтр по category** (`?category=SPORT`, `findByCategory`)
 - Вложенные: `POST /api/users/{id}/tracks`, `POST /api/tracks/{id}/tasks`
-- `GET /api/tracks/{id}/days` — **дорожка дней** (шаг 2): `List<DayResponse(date, DayStatus, totalTasks, doneTasks)` от `createdAt` до `deadline` (или до сегодня, если deadline нет)
+- `GET /api/tracks/{id}/days` — **дорожка дней** (шаг 2): `List<DayResponse(date, DayStatus, totalTasks, doneTasks)` от `createdAt` до `deadline` (или до последней даты задач/сегодня, если deadline нет)
+- `GET /api/tracks/{id}/progress` — **прогресс трека** (шаг 3): `ProgressResponse(totalTasks, doneTasks, totalDays, doneDays)` — переиспользует `getDays`
+
+### Планировщик (шаг 4)
+- `@EnableScheduling` на `FlowstateApplication`
+- `RedistributionService` (`@Scheduled(cron = "0 0 2 * * *")`, ночной job): PENDING-задачи с прошедшей датой равномерно распределяются (round-robin) по дням от сегодня до дедлайна; без дедлайна — до последней даты задач трека; трек с прошедшим дедлайном игнорируется
+- `TaskRepository.findByStatusAndDateBefore(TaskStatus, LocalDate)`
 
 ### Ключевые решения
 - **DTO-слои**: request/response как `record`, валидация через `jakarta.validation` (`@NotBlank`, `@Size`, `@Email`, `@NotNull`), `@Valid` в контроллерах
@@ -131,9 +138,9 @@ mapper (DTO ↔ entity)
 
 1. ✅ **Миграция данных под новую модель (V3)** — сделано (см. раздел 4)
 2. ✅ **Дни трека** — `GET /api/tracks/{id}/days` — сделано (см. раздел 5): статусы EMPTY/PARTIAL/DONE через `groupingBy`
-3. ⬜ **Прогресс трека** — `GET /api/tracks/{id}/progress`: выполнено задач/всего, закрыто дней/всего.
+3. ✅ **Прогресс трека** — `GET /api/tracks/{id}/progress` — сделано (см. раздел 5)
 
-4. **Фича №1 — автоперераспределение:** `@Scheduled` job (ночью, раз в сутки), находит все PENDING-задачи с прошедшей датой, равномерно распределяет по оставшимся дням до дедлайна (обновляет `date`).
+4. ✅ **Фича №1 — автоперераспределение:** `@Scheduled` job (ночью, раз в сутки), находит все PENDING-задачи с прошедшей датой, равномерно распределяет по оставшимся дням до дедлайна (обновляет `date`). Сделано (см. раздел 5).
 
 5. **Фича №2 — ударный режим (streak):**
    - при закрытии последней задачи дня → обновить `currentStreak`/`lastActiveDate` (инкремент, если вчера был активен; сброс на 1, если разрыв)

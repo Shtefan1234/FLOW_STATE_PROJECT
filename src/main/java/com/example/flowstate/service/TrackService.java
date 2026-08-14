@@ -87,7 +87,18 @@ public class TrackService {
                 .collect(Collectors.groupingBy(Task::getDate));
 
         LocalDate start = track.getCreatedAt();
-        LocalDate end = (track.getDeadline() != null) ? track.getDeadline() : LocalDate.now();
+
+        LocalDate end;
+        if (track.getDeadline() != null) {
+            end = track.getDeadline();
+        } else {
+            LocalDate lastPlannedDate = tasks.stream()
+                    .filter(t -> t.getDate() != null)
+                    .map(Task::getDate)
+                    .max(LocalDate::compareTo)
+                    .orElse(LocalDate.now());
+            end = lastPlannedDate.isAfter(LocalDate.now()) ? lastPlannedDate : LocalDate.now();
+        }
 
         if (end.isBefore(start)) {
             return List.of();

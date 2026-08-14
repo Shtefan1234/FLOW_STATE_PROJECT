@@ -10,7 +10,6 @@ import com.example.flowstate.mapper.TaskWebMapper;
 import com.example.flowstate.mapper.TrackWebMapper;
 import com.example.flowstate.model.Task;
 import com.example.flowstate.model.Track;
-import com.example.flowstate.service.RedistributionService;
 import com.example.flowstate.service.TaskService;
 import com.example.flowstate.service.TrackService;
 import jakarta.validation.Valid;
@@ -34,7 +33,6 @@ public class TrackController {
     private final TrackWebMapper trackWebMapper;
     private final TaskService taskService;
     private final TaskWebMapper taskWebMapper;
-    private final RedistributionService redistributionService;
 
     @GetMapping
     public Page<TrackResponse> getAll(@RequestParam(defaultValue = "0") int page,
@@ -82,10 +80,5 @@ public class TrackController {
     @GetMapping("/{id}/progress")
     public ProgressResponse getProgress(@PathVariable("id") Long trackId){
         return trackService.getProgress(trackId);
-    }
-
-    @PostMapping("/redistribute-test")
-    public void redistributeTest() {
-        redistributionService.redistributeOverdueTasks();
     }
 }
