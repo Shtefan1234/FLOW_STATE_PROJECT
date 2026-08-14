@@ -3,6 +3,7 @@ package com.example.flowstate.controller;
 import com.example.flowstate.dto.request.TaskRequest;
 import com.example.flowstate.dto.request.TrackRequest;
 import com.example.flowstate.dto.response.DayResponse;
+import com.example.flowstate.dto.response.ProgressResponse;
 import com.example.flowstate.dto.response.TaskResponse;
 import com.example.flowstate.dto.response.TrackResponse;
 import com.example.flowstate.mapper.TaskWebMapper;
@@ -75,5 +76,9 @@ public class TrackController {
     @GetMapping("/{id}/days")
     public List<DayResponse> getDays(@PathVariable("id") Long trackId) {
         return trackService.getDays(trackId);
+    }
+    @GetMapping("/{id}/progress")
+    public ProgressResponse getProgress(@PathVariable("id") Long trackId){
+        return trackService.getProgress(trackId);
     }
 }

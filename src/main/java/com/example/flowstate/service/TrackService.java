@@ -1,6 +1,7 @@
 package com.example.flowstate.service;
 
 import com.example.flowstate.dto.response.DayResponse;
+import com.example.flowstate.dto.response.ProgressResponse;
 import com.example.flowstate.exception.TrackNotFoundException;
 import com.example.flowstate.exception.UserNotFoundException;
 import com.example.flowstate.model.DayStatus;
@@ -113,5 +114,16 @@ public class TrackService {
             status = DayStatus.PARTIAL;
         }
         return new DayResponse(date, status, tasks.size(), done);
+    }
+    public ProgressResponse getProgress(Long trackId){
+        List<DayResponse> days = getDays(trackId);
+
+        int totalDays = days.size();
+        int doneDays = (int) days.stream()
+                .filter(e->e.status()==DayStatus.DONE)
+                .count();
+        int totalTasks = days.stream().mapToInt(DayResponse::totalTasks).sum();
+        int doneTasks = days.stream().mapToInt(DayResponse::doneTasks).sum();
+        return new ProgressResponse(totalTasks,doneTasks,totalDays,doneDays);
     }
 }
