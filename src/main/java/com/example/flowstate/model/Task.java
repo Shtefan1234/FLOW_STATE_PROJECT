@@ -14,6 +14,7 @@ public class Task {
     @Enumerated(EnumType.STRING)
     private TaskStatus status;
     private int orderIndex;
+    @Enumerated(EnumType.STRING)
     private TaskCategory category;
     private LocalDate date;
     @ManyToOne
