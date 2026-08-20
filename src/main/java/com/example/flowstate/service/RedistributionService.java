@@ -24,7 +24,7 @@ public class RedistributionService {
         this.taskRepository=taskRepository;
         this.trackRepository=trackRepository;
     }
-    @Scheduled(cron = "0 0 2 * * *")
+    @Scheduled(cron = "0 1 0 * * *")
     @Transactional
     public void redistributeOverdueTasks(){
         LocalDate today = LocalDate.now();

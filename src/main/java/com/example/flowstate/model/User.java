@@ -17,8 +17,6 @@ public class User {
     private Long id;
     private String name;
     private String email;
-    private int currentStreak;
-    private LocalDate lastActiveDate;
 
     @JsonIgnore
     @OneToMany(mappedBy = "user")
@@ -48,22 +46,6 @@ public class User {
         this.email = email;
     }
 
-    public int getCurrentStreak() {
-        return currentStreak;
-    }
-
-    public void setCurrentStreak(int currentStreak) {
-        this.currentStreak = currentStreak;
-    }
-
-    public LocalDate getLastActiveDate() {
-        return lastActiveDate;
-    }
-
-    public void setLastActiveDate(LocalDate lastActiveDate) {
-        this.lastActiveDate = lastActiveDate;
-    }
-
     public List<Track> getTracks() {
         return tracks;
     }
@@ -71,5 +53,4 @@ public class User {
     public void setTracks(List<Track> tracks) {
         this.tracks = tracks;
     }
-
 }

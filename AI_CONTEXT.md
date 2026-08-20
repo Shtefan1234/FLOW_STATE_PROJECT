@@ -16,7 +16,7 @@
 
 **Две фичи-отличия:**
 1. **Автоперераспределение просроченных задач** — если пользователь пропустил день, план не «ломается»: просроченные задачи сами распределяются по оставшимся дням до дедлайна.
-2. **Ударный режим (streak)** — стрик дней подряд с полностью закрытыми задачами + предупреждение, если сегодня есть риск прервать серию.
+2. **Ударный режим (streak)** — стрик дней подряд, когда в треке был выполнен хотя бы 1 DONE-задача за день + предупреждение, если сегодня есть риск прервать серию.
 
 **НЕ входит в MVP (отложено):** чекин настроения/энергии, эмоциональные маркеры задач, полноценная авторизация (сейчас один пользователь без логина).
 
@@ -44,8 +44,6 @@
 | id | BIGINT identity | PK |
 | name | VARCHAR(255) | |
 | email | VARCHAR(255) | |
-| current_streak | INT | default 0, для ударного режима |
-| last_active_date | DATE | для ударного режима |
 
 ### tracks
 | Поле | Тип | Примечание |
@@ -55,6 +53,8 @@
 | deadline | DATE | необязательный (кейс «привычка без конца»: если нет — дорожка дней до сегодня) |
 | created_at | DATE | |
 | user_id | BIGINT | FK → users.id, ON DELETE CASCADE |
+| current_streak | INT | default 0, для ударного режима (переехало с users по V4) |
+| last_active_date | DATE | для ударного режима (переехало с users по V4) |
 
 ### tasks
 | Поле | Тип | Примечание |
@@ -88,9 +88,10 @@
 
 - ✅ **Track**: убрать `category`
 - ✅ **Task**: добавить `category` (enum TaskCategory) и `date` (LocalDate)
-- ✅ **User**: добавить `currentStreak` (int) и `lastActiveDate` (LocalDate)
+- ✅ **User**: добавить `currentStreak` (int) и `lastActiveDate` (LocalDate) — позже (по V4) **перенесено на Track**
 - ✅ Фильтр по категории перенесён с Track на Task (`GET /api/tasks?category=SPORT`)
 - ✅ Новая миграция `V3` (старые V1/V2 не редактировать — применены)
+- ✅ Миграция `V4__move_streak_to_track.sql`: `current_streak`/`last_active_date` перенесены с `users` на `tracks` (стрик теперь у трека)
 
 ---
 
@@ -111,11 +112,14 @@ mapper (DTO ↔ entity)
 - Вложенные: `POST /api/users/{id}/tracks`, `POST /api/tracks/{id}/tasks`
 - `GET /api/tracks/{id}/days` — **дорожка дней** (шаг 2): `List<DayResponse(date, DayStatus, totalTasks, doneTasks)` от `createdAt` до `deadline` (или до последней даты задач/сегодня, если deadline нет)
 - `GET /api/tracks/{id}/progress` — **прогресс трека** (шаг 3): `ProgressResponse(totalTasks, doneTasks, totalDays, doneDays)` — переиспользует `getDays`
+- `GET /api/tracks/{id}/streak-status` — **статус стрика** (шаг 5): `StreakStatusResponse(currentStreak, atRisk, pendingTaskToday, hoursLeftToday)`
 
-### Планировщик (шаг 4)
+### Планировщик (шаги 4–5)
 - `@EnableScheduling` на `FlowstateApplication`
-- `RedistributionService` (`@Scheduled(cron = "0 0 2 * * *")`, ночной job): PENDING-задачи с прошедшей датой равномерно распределяются (round-robin) по дням от сегодня до дедлайна; без дедлайна — до последней даты задач трека; трек с прошедшим дедлайном игнорируется
-- `TaskRepository.findByStatusAndDateBefore(TaskStatus, LocalDate)`
+- `RedistributionService` (`@Scheduled(cron = "0 1 0 * * *")`, ночной job в 00:01): PENDING-задачи с прошедшей датой равномерно распределяются (round-robin) по дням от сегодня до дедлайна; без дедлайна — до последней даты задач трека; трек с прошедшим дедлайном игнорируется
+- `StreakService` (`@Scheduled(cron = "59 23 * * *")`, ночной job в 23:59): пересчитывает стрик каждого трека по задачам на сегодня — есть ≥1 DONE → `currentStreak` = +1 (если вчера был активен) или 1 (при разрыве), `lastActiveDate` = сегодня; задач нет → день отдыха (стрик не трогаем); есть задачи, но 0 DONE (включая день со всеми SKIPPED) → `currentStreak` = 0
+- **Порядок**: стрик в 23:59 (пока задачи ещё на своих датах), перераспределение в 00:01 (уже после смены суток)
+- `TaskRepository.findByStatusAndDateBefore(TaskStatus, LocalDate)`, `TaskRepository.countByTrackIdAndStatusAndDate(Long, TaskStatus, LocalDate)`
 
 ### Ключевые решения
 - **DTO-слои**: request/response как `record`, валидация через `jakarta.validation` (`@NotBlank`, `@Size`, `@Email`, `@NotNull`), `@Valid` в контроллерах
@@ -123,7 +127,7 @@ mapper (DTO ↔ entity)
 - **Свои исключения**: `UserNotFoundException`, `TrackNotFoundException`, `TaskNotFoundException` (extends RuntimeException, сообщения на русском)
 - **GlobalExceptionHandler** (`@RestControllerAdvice`): 404 для «не найдено», 400 для ошибок валидации, ответ `ErrorResponse(status, message)`
 - **Стиль контроллера**: `@RestController`, `@RequiredArgsConstructor`, `@Validated`, `@ResponseStatus`, БЕЗ `ResponseEntity`
-- **Flyway**: `V1__create_tables.sql` (создание), `V2__cascade_delete.sql` (ON DELETE CASCADE), `V3__move_category_to_task.sql` (категория → Task, date → Task, streak-поля → User). Правило: применённые миграции не редактировать, новое = новый файл.
+- **Flyway**: `V1__create_tables.sql` (создание), `V2__cascade_delete.sql` (ON DELETE CASCADE), `V3__move_category_to_task.sql` (категория → Task, date → Task, streak-поля → User), `V4__move_streak_to_track.sql` (streak-поля → Track). Правило: применённые миграции не редактировать, новое = новый файл.
 
 ### Thymeleaf UI
 - `DashboardController` (`@Controller`, не REST): `GET /` — дашборд
@@ -142,10 +146,7 @@ mapper (DTO ↔ entity)
 
 4. ✅ **Фича №1 — автоперераспределение:** `@Scheduled` job (ночью, раз в сутки), находит все PENDING-задачи с прошедшей датой, равномерно распределяет по оставшимся дням до дедлайна (обновляет `date`). Сделано (см. раздел 5).
 
-5. **Фича №2 — ударный режим (streak):**
-   - при закрытии последней задачи дня → обновить `currentStreak`/`lastActiveDate` (инкремент, если вчера был активен; сброс на 1, если разрыв)
-   - тот же ночной job проверяет незакрытые задачи за вчера → при наличии сброс `currentStreak` на 0
-   - `GET /api/tracks/{id}/streak-status` → `{ currentStreak, atRisk, pendingTasksToday, hoursLeftToday }` для баннера-предупреждения
+5. ✅ **Фича №2 — ударный режим (streak):** стрик у трека (`currentStreak`/`lastActiveDate` на Track по V4). Ночной job `StreakService` в 23:59 пересчитывает стрик по задачам на сегодня: есть ≥1 DONE → +1 (или =1 при разрыве); задач нет → день отдыха; есть задачи, но 0 DONE (включая день со всеми SKIPPED) → стрик = 0. `GET /api/tracks/{id}/streak-status` → `{ currentStreak, atRisk, pendingTaskToday, hoursLeftToday }`; бейдж «🔥 N» на дашборде. Сделано (см. раздел 5).
 
 6. **После MVP:** Docker, секреты через env (проверить/завернуть), healthcheck/Actuator, логирование SLF4J, обновить README. Привести MVP к чек-листу требований.
 

@@ -45,10 +45,10 @@ public class TaskService {
     }
 
     public Task update(Long id, Task task) {
-        if (!taskRepository.existsById(id)) {
-            throw new TaskNotFoundException(id);
-        }
+        Task existing = taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException(id));
         task.setId(id);
+        task.setTrack(existing.getTrack());
         return taskRepository.save(task);
     }
 

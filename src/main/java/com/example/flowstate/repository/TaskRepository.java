@@ -14,4 +14,5 @@ public interface TaskRepository extends JpaRepository<Task,Long> {
     List<Task> findByTrackId(Long trackId);
     Page<Task> findByCategory(TaskCategory category, Pageable pageable);
     List<Task> findByStatusAndDateBefore(TaskStatus status, LocalDate date);
+    long countByTrackIdAndStatusAndDate(Long trackId, TaskStatus status, LocalDate date);
 }

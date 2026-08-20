@@ -13,6 +13,7 @@
         .user-email { color: #666; font-size: .9em; }
         .track { border-left: 4px solid #3b82f6; padding: 8px 12px; margin: 8px 0; background: #f9fbfd; border-radius: 6px; }
         .track-title { font-weight: 600; }
+        .streak { font-size: .75em; padding: 2px 8px; border-radius: 10px; background: #ffedd5; color: #c2410c; }
         .task { display: flex; align-items: center; gap: 8px; margin: 4px 0 4px 16px; }
         .task.done span { text-decoration: line-through; color: #999; }
         .badge { font-size: .75em; padding: 2px 8px; border-radius: 10px; background: #e5e7eb; }
@@ -48,6 +49,8 @@
 
     <div th:each="track : ${user.tracks}" class="track">
         <span class="track-title" th:text="${track.title}">Трек</span>
+        <span class="streak" th:if="${track.currentStreak > 0}"
+              th:text="${'🔥 ' + track.currentStreak}">🔥 3</span>
         <span class="muted" th:if="${track.deadline != null}" th:text="${'до ' + track.deadline}">до</span>
         <form class="inline" method="post" th:action="@{/tracks/{id}/delete(id=${track.id})}">
             <button type="submit" class="danger">Удалить трек</button>

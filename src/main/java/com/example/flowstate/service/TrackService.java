@@ -2,6 +2,7 @@ package com.example.flowstate.service;
 
 import com.example.flowstate.dto.response.DayResponse;
 import com.example.flowstate.dto.response.ProgressResponse;
+import com.example.flowstate.dto.response.StreakStatusResponse;
 import com.example.flowstate.exception.TrackNotFoundException;
 import com.example.flowstate.exception.UserNotFoundException;
 import com.example.flowstate.model.DayStatus;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -73,9 +75,11 @@ public class TrackService {
         }
         return trackRepository.save(trackData);
     }
+
     public Page<Track> findAll(Pageable pageable) {
         return trackRepository.findAll(pageable);
     }
+
     public List<DayResponse> getDays(Long trackId) {
         Track track = trackRepository.findById(trackId)
                 .orElseThrow(() -> new TrackNotFoundException(trackId));
@@ -126,15 +130,27 @@ public class TrackService {
         }
         return new DayResponse(date, status, tasks.size(), done);
     }
-    public ProgressResponse getProgress(Long trackId){
+
+    public ProgressResponse getProgress(Long trackId) {
         List<DayResponse> days = getDays(trackId);
 
         int totalDays = days.size();
         int doneDays = (int) days.stream()
-                .filter(e->e.status()==DayStatus.DONE)
+                .filter(e -> e.status() == DayStatus.DONE)
                 .count();
         int totalTasks = days.stream().mapToInt(DayResponse::totalTasks).sum();
         int doneTasks = days.stream().mapToInt(DayResponse::doneTasks).sum();
-        return new ProgressResponse(totalTasks,doneTasks,totalDays,doneDays);
+        return new ProgressResponse(totalTasks, doneTasks, totalDays, doneDays);
+    }
+
+    public StreakStatusResponse getStreakStatus(Long trackId) {
+        Track track = getById(trackId);
+        LocalDate today = LocalDate.now();
+        long pendingToday = taskRepository
+                .countByTrackIdAndStatusAndDate(trackId, TaskStatus.PENDING, today);
+        long hoursLeft = ChronoUnit.HOURS.between(LocalDateTime.now(),
+                LocalDate.now().plusDays(1).atStartOfDay());
+        boolean atRisk = pendingToday>0;
+        return new StreakStatusResponse(track.getCurrentStreak(),atRisk,(int) pendingToday,(int) hoursLeft);
     }
 }

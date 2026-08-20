@@ -16,7 +16,8 @@ public class TrackWebMapper {
                 track.getId(),
                 track.getTitle(),
                 track.getDeadline(),
-                track.getCreatedAt()
+                track.getCreatedAt(),
+                track.getCurrentStreak()
         );
     }
 }

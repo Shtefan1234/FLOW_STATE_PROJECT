@@ -2,10 +2,7 @@ package com.example.flowstate.controller;
 
 import com.example.flowstate.dto.request.TaskRequest;
 import com.example.flowstate.dto.request.TrackRequest;
-import com.example.flowstate.dto.response.DayResponse;
-import com.example.flowstate.dto.response.ProgressResponse;
-import com.example.flowstate.dto.response.TaskResponse;
-import com.example.flowstate.dto.response.TrackResponse;
+import com.example.flowstate.dto.response.*;
 import com.example.flowstate.mapper.TaskWebMapper;
 import com.example.flowstate.mapper.TrackWebMapper;
 import com.example.flowstate.model.Task;
@@ -20,7 +17,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -80,5 +76,9 @@ public class TrackController {
     @GetMapping("/{id}/progress")
     public ProgressResponse getProgress(@PathVariable("id") Long trackId){
         return trackService.getProgress(trackId);
+    }
+    @GetMapping("/{id}/streak-status")
+    public StreakStatusResponse getStreakStatus(@PathVariable("id") Long trackId){
+        return trackService.getStreakStatus(trackId);
     }
 }

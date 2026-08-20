@@ -4,5 +4,6 @@ public record TrackResponse (
         Long id,
         String title,
         LocalDate deadline,
-        LocalDate createdAt
+LocalDate createdAt,
+        int currentStreak
 ){}

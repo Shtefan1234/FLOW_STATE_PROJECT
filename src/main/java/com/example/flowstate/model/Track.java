@@ -22,11 +22,23 @@ public class Track {
     @JsonIgnore
     @OneToMany(mappedBy = "track")
     private List<Task> tasks = new ArrayList<>();
+    private int currentStreak;
+    private LocalDate lastActiveDate;
 
     public Track() {
-
     }
-
+    public int getCurrentStreak(){
+        return currentStreak;
+    }
+    public void setCurrentStreak(int currentStreak){
+        this.currentStreak=currentStreak;
+    }
+    public LocalDate getLastActiveDate(){
+        return lastActiveDate;
+    }
+    public void setLastActiveDate(LocalDate lastActiveDate){
+        this.lastActiveDate=lastActiveDate;
+    }
     public String getTitle() {
         return title;
     }
